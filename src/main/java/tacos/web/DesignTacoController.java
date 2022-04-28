@@ -1,21 +1,19 @@
 package tacos.web;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.Errors;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.annotation.*;
 import tacos.Ingredient;
+import tacos.Order;
 import tacos.Taco;
 import tacos.data.IngredientRepository;
+import tacos.data.TacoRepository;
 
 import javax.validation.Valid;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -25,13 +23,34 @@ import java.util.stream.Collectors;
 @Slf4j
 @Controller
 @RequestMapping("/design")
+@SessionAttributes("order")
 public class DesignTacoController {
 
 	private final IngredientRepository ingredientRepository;
 
+	private TacoRepository tacoRepository;
+
 	@Autowired
-	public DesignTacoController(IngredientRepository ingredientRepository) {
+	public DesignTacoController(IngredientRepository ingredientRepository, TacoRepository tacoRepository) {
 		this.ingredientRepository = ingredientRepository;
+		this.tacoRepository = tacoRepository;
+	}
+
+	private List<Ingredient> filterByType(List<Ingredient> ingredientList, Ingredient.Type type) {
+		return ingredientList
+				.stream()
+				.filter(x -> x.getType().equals(type))
+				.collect(Collectors.toList());
+	}
+
+	@ModelAttribute(name = "order")
+	public Order order() {
+		return new Order();
+	}
+
+	@ModelAttribute(name = "taco")
+	public Taco taco() {
+		return new Taco();
 	}
 
 	@GetMapping
@@ -52,21 +71,14 @@ public class DesignTacoController {
 		return "design";
 	}
 
-	private List<Ingredient> filterByType(List<Ingredient> ingredientList, Ingredient.Type type) {
-		return ingredientList
-				.stream()
-				.filter(x -> x.getType().equals(type))
-				.collect(Collectors.toList());
-	}
-
 	@PostMapping
-	public String processDesign(@Valid Taco design, Errors errors) {
+	public String processDesign(@Valid Taco design, Errors errors, @ModelAttribute Order order) {
 		if(errors.hasErrors()) {
 			return "design";
 		}
 
-		// TODO : 선택된 식자재 내역을 저장한다.
-		log.info("Processing design:" + design);
+		Taco saved = tacoRepository.save(design);
+		order.addDesign(saved);
 
 		return "redirect:/orders/current";
 	}
