@@ -34,6 +34,18 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .dataSource(dataSource)
                 .usersByUsernameQuery("select username, password, enabled from users where username = ?")
                 .authoritiesByUsernameQuery("select username, authority from authorities where username = ?")
-                .passwordEncoder(new NoEncodingPasswordEncoder());
+                .passwordEncoder(new NoEncodingPasswordEncoder())
+                .and()
+                .ldapAuthentication()
+                .userSearchBase("ou=people")
+                .userSearchFilter("(uid={0})")
+                .groupSearchBase("ou=groups")
+                .groupSearchFilter("member={0}")
+                .contextSource()
+                .url("ldap://localhost:8389/dc=tacocloud,dc=com")
+                .and()
+                .passwordCompare()
+                .passwordEncoder(new NoEncodingPasswordEncoder())
+                .passwordAttribute("userPassword");
     }
 }
