@@ -1,18 +1,25 @@
 package tacos.security;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-
-import javax.sql.DataSource;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Configuration
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Autowired
-    DataSource dataSource;
+    private UserDetailsService userDetailsService;
+
+    @Bean
+    public PasswordEncoder encoder() {
+        return new BCryptPasswordEncoder();
+    }
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
@@ -25,27 +32,18 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .csrf().ignoringAntMatchers("/h2-console/**").disable()
                 .headers().frameOptions().disable()
                 .and()
-                .httpBasic();
+                .formLogin()
+                .loginPage("/login")
+                .defaultSuccessUrl("/design", true)
+                .and()
+                .logout()
+                .logoutSuccessUrl("/")
+                .and()
+                .csrf();
     }
 
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth.jdbcAuthentication()
-                .dataSource(dataSource)
-                .usersByUsernameQuery("select username, password, enabled from users where username = ?")
-                .authoritiesByUsernameQuery("select username, authority from authorities where username = ?")
-                .passwordEncoder(new NoEncodingPasswordEncoder())
-                .and()
-                .ldapAuthentication()
-                .userSearchBase("ou=people")
-                .userSearchFilter("(uid={0})")
-                .groupSearchBase("ou=groups")
-                .groupSearchFilter("member={0}")
-                .contextSource()
-                .url("ldap://localhost:8389/dc=tacocloud,dc=com")
-                .and()
-                .passwordCompare()
-                .passwordEncoder(new NoEncodingPasswordEncoder())
-                .passwordAttribute("userPassword");
+        auth.userDetailsService(userDetailsService);
     }
 }
