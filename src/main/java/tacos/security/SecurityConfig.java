@@ -3,6 +3,7 @@ package tacos.security;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
@@ -23,23 +24,37 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        http.authorizeHttpRequests()
-                .antMatchers("/design", "/orders")
-                .hasAuthority("ROLE_USER")
-                .antMatchers("/", "/**", "/h2-console/**")
-                .permitAll()
-                .and()
-                .csrf().ignoringAntMatchers("/h2-console/**").disable()
-                .headers().frameOptions().disable()
-                .and()
-                .formLogin()
-                .loginPage("/login")
-                .defaultSuccessUrl("/design", true)
-                .and()
-                .logout()
-                .logoutSuccessUrl("/")
-                .and()
-                .csrf().ignoringAntMatchers("/h2-console/**");
+        http
+            .authorizeRequests()
+            .antMatchers(HttpMethod.OPTIONS).permitAll() // needed for Angular/CORS
+            .antMatchers("/design", "/orders/**")
+            .permitAll()
+            //.access("hasRole('ROLE_USER')")
+            .antMatchers(HttpMethod.PATCH, "/ingredients").permitAll()
+            .antMatchers("/**").access("permitAll")
+
+            .and()
+            .formLogin()
+            .loginPage("/login")
+
+            .and()
+            .httpBasic()
+            .realmName("Taco Cloud")
+
+            .and()
+            .logout()
+            .logoutSuccessUrl("/")
+
+            .and()
+            .csrf()
+            .ignoringAntMatchers("/h2-console/**", "/ingredients/**", "/design", "/orders/**")
+
+            // Allow pages to be loaded in frames from the same origin; needed for H2-Console
+            .and()
+            .headers()
+            .frameOptions()
+            .sameOrigin()
+        ;
     }
 
     @Override
