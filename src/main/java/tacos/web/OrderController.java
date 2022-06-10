@@ -1,82 +1,77 @@
 package tacos.web;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.validation.Errors;
+import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.bind.support.SessionStatus;
 import tacos.Order;
-import tacos.User;
 import tacos.data.OrderRepository;
-
-import javax.validation.Valid;
 
 /**
  * 주문 요청 처리
  */
 @Slf4j
-@Controller
+@RestController
 @RequestMapping("/orders")
-@SessionAttributes("order")
 public class OrderController {
 
     private OrderRepository orderRepository;
 
-    private OrderProps orderProps;
-
-    public OrderController(OrderRepository orderRepository, OrderProps orderProps) {
+    public OrderController(OrderRepository orderRepository) {
         this.orderRepository = orderRepository;
-        this.orderProps = orderProps;
     }
 
-    @GetMapping("/current")
-    public String orderForm(@AuthenticationPrincipal User user, @ModelAttribute Order order) {
-
-        if(order.getDeliveryName() == null) {
-            order.setDeliveryName(user.getFullname());
-        }
-
-        if(order.getDeliveryStreet() == null) {
-            order.setDeliveryStreet(user.getStreet());
-        }
-
-        if(order.getDeliveryCity() == null) {
-            order.setDeliveryCity(user.getCity());
-        }
-
-        if(order.getDeliveryState() == null) {
-            order.setDeliveryState(user.getState());
-        }
-
-        if(order.getDeliveryZip() == null) {
-            order.setDeliveryZip(user.getZip());
-        }
-
-        return "orderForm";
+    @PutMapping("/{orderId}")
+    public Order putOrder(@RequestBody Order order) {
+        return orderRepository.save(order);
     }
 
-    @GetMapping
-    public String ordersForUser(@AuthenticationPrincipal User user, Model model) {
-        Pageable pageable = PageRequest.of(0, orderProps.getPageSize());
-        model.addAttribute("orders", orderRepository.findByUserOrderByPlacedAtDesc(user, pageable));
-        return "orderList";
-    }
+    @PatchMapping(path="/{orderId}", consumes="application/json")
+    public Order patchOrder(@PathVariable("orderId") Long orderId, @RequestBody Order patch) {
+        Order order = orderRepository.findById(orderId).get();
 
-    @PostMapping
-    public String processOrder(@Valid Order order, Errors errors, SessionStatus sessionStatus, @AuthenticationPrincipal User user) {
-        if(errors.hasErrors()) {
-            return "orderForm";
+        if(patch.getDeliveryName() != null) {
+            order.setDeliveryName(patch.getDeliveryName());
         }
 
-        order.setUser(user);
+        if(patch.getDeliveryState() != null) {
+            order.setDeliveryState(patch.getDeliveryState());
+        }
 
-        orderRepository.save(order);
-        sessionStatus.setComplete();
+        if(patch.getDeliveryCity() != null) {
+            order.setDeliveryCity(patch.getDeliveryCity());
+        }
 
-        return "redirect:/";
+        if(patch.getDeliveryStreet() != null) {
+            order.setDeliveryStreet(patch.getDeliveryStreet());
+        }
+
+        if(patch.getDeliveryZip() != null) {
+            order.setDeliveryZip(patch.getDeliveryZip());
+        }
+
+        if(patch.getCcNumber() != null) {
+            order.setCcNumber(patch.getCcNumber());
+        }
+
+        if(patch.getCcExpiration() != null) {
+            order.setCcExpiration(patch.getCcExpiration());
+        }
+
+        if(patch.getCcCVV() != null) {
+            order.setCcCVV(patch.getCcCVV());
+        }
+
+        return orderRepository.save(order);
+    }
+
+    @DeleteMapping("/{orderId}")
+    @ResponseStatus(code= HttpStatus.NO_CONTENT)
+    public void deleteOrder(@PathVariable("orderId") Long orderId) {
+        try {
+            orderRepository.deleteById(orderId);
+        } catch(EmptyResultDataAccessException e) {
+
+        }
     }
 }
