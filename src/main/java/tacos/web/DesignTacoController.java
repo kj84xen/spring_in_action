@@ -4,30 +4,34 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.MediaTypes;
+import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
+import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.*;
-import tacos.Order;
 import tacos.Taco;
+import tacos.TacoModel;
 import tacos.data.TacoRepository;
 
-import javax.validation.Valid;
+import java.util.List;
 import java.util.Optional;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 
 /**
  * 식자재 요청 처리
  */
 @Slf4j
 @RestController
-@RequestMapping(value = "/design", produces = {"application/json", "text/xml"})
+@RequestMapping(value = "/design", produces = {"application/json", "text/xml", MediaTypes.HAL_JSON_VALUE})
 @CrossOrigin(origins = "*")
 public class DesignTacoController {
 
 	private TacoRepository tacoRepository;
-
-//	@Autowired
-//	EntityLinks entityLinks;
 
 	@Autowired
 	public DesignTacoController(TacoRepository tacoRepository) {
@@ -35,9 +39,12 @@ public class DesignTacoController {
 	}
 
 	@GetMapping("/recent")
-	public Iterable<Taco> recentTacos() {
+	public ResponseEntity recentTacos() {
 		PageRequest pageRequest = PageRequest.of(0, 12, Sort.by("createdAt").descending());
-		return tacoRepository.findAll(pageRequest).getContent();
+
+		List<Taco> tacoList = tacoRepository.findAll(pageRequest).getContent();
+		CollectionModel collectionModel = CollectionModel.of(tacoList, linkTo(methodOn(this.getClass()).recentTacos()).withRel("recents"));
+		return new ResponseEntity(collectionModel, HttpStatus.OK);
 	}
 
 	@GetMapping("/{id}")
