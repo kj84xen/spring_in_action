@@ -1,8 +1,9 @@
-package tacos;
+package tacos.dto;
 
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.server.RepresentationModelAssembler;
 import org.springframework.stereotype.Component;
+import tacos.domain.Taco;
 import tacos.web.DesignTacoController;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;

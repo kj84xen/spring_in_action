@@ -2,8 +2,8 @@ package tacos.data;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.CrudRepository;
-import tacos.Order;
-import tacos.User;
+import tacos.domain.Order;
+import tacos.domain.User;
 
 import java.util.List;
 

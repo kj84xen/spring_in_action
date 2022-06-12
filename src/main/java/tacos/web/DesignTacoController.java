@@ -8,8 +8,8 @@ import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import tacos.Taco;
-import tacos.TacoModelAssembler;
+import tacos.domain.Taco;
+import tacos.dto.TacoModelAssembler;
 import tacos.data.TacoRepository;
 
 import java.util.List;

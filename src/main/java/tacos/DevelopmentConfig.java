@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import tacos.data.IngredientRepository;
 import tacos.data.UserRepository;
+import tacos.domain.Ingredient;
 
 @Profile("!prod")
 @Configuration

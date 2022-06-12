@@ -1,10 +1,11 @@
-package tacos;
+package tacos.dto;
 
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import org.springframework.hateoas.RepresentationModel;
 import org.springframework.hateoas.server.core.Relation;
+import tacos.domain.Ingredient;
 
 import java.util.Date;
 import java.util.List;
